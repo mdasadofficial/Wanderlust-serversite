@@ -22,6 +22,14 @@ const client = new MongoClient(uri, {
   },
 });
 
+// const client = new MongoClient(uri, {
+//   serverApi: {
+//     version: ServerApiVersion.v1,
+//     strict: true,
+//     deprecationErrors: true,
+//   },
+// });
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -54,31 +62,28 @@ async function run() {
       res.json(result);
     });
 
-
     // Patch Api
     app.patch("/destination/:id", async (req, res) => {
       const { id } = req.params;
       const updatedData = req.body;
 
-    console.log(updatedData);
+      console.log(updatedData);
 
       const result = await destinationCollection.updateOne(
         { _id: new ObjectId(id) },
         { $set: updatedData },
       );
       res.json(result);
-     
     });
 
-
-
     // Delete Api
-app.delete('/destination/:id', async (req,res)=>{
-  const {id} = req.params;
-  const result = await destinationCollection.deleteOne({_id: new ObjectId(id)})
-  res.json(result);
-})
-
+    app.delete("/destination/:id", async (req, res) => {
+      const { id } = req.params;
+      const result = await destinationCollection.deleteOne({
+        _id: new ObjectId(id),
+      });
+      res.json(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
