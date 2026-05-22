@@ -37,6 +37,7 @@ async function run() {
 
     const db = client.db("wanderlust");
     const destinationCollection = db.collection("destination");
+    const bookingCollection = db.collection("booking");
 
     // Get Api
     app.get("/destination", async (req, res) => {
@@ -73,6 +74,21 @@ async function run() {
         { _id: new ObjectId(id) },
         { $set: updatedData },
       );
+      res.json(result);
+    });
+
+    // Booking Get Api
+    app.get("/booking/:userId", async (req, res) => {
+      const { userId } = req.params;
+      const result = await bookingCollection.find({ userId: userId }).toArray();
+      res.json(result);
+    });
+
+    // Booking Post Api
+    app.post("/booking", async (req, res) => {
+      const bookingData = req.body;
+      const result = await bookingCollection.insertOne(bookingData);
+      console.log(bookingData);
       res.json(result);
     });
 
