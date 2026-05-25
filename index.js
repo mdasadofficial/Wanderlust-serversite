@@ -24,11 +24,11 @@ const client = new MongoClient(uri, {
 });
 
 const JWKS = createRemoteJWKSet(
-  new URL("http://localhost:3000/api/auth/jwks")
+  new URL(`${process.env.CLIENT_URL}/api/auth/jwks`)
 )
 
-const verifyToken = (req, res, next) => {
-  const authHeader = req?.headers?.authorization;
+const verifyToken = async (req, res, next) => {
+  const authHeader = req?.headers.authorization;
   if (!authHeader) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -39,25 +39,26 @@ const verifyToken = (req, res, next) => {
 
 try {
       const { payload } = await jwtVerify(token, JWKS)
-console.log(payload);
+      console.log(payload);
+      next()
 } catch (error) {
-  
+  return res.status(401).json({message:"Forbidden"})
 }
 
-  next();
+ 
 };
 
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("wanderlust");
     const destinationCollection = db.collection("destination");
     const bookingCollection = db.collection("booking");
 
     // Cancel Api
-    app.delete("/booking/:bookingId", async (req, res) => {
+    app.delete("/booking/:bookingId",verifyToken, async (req, res) => {
       const { bookingId } = req.params;
       const result = await bookingCollection.deleteOne({
         _id: new ObjectId(bookingId),
@@ -87,6 +88,7 @@ async function run() {
         _id: new ObjectId(id),
       });
       res.json(result);
+      
     });
 
     // Patch Api
@@ -94,7 +96,7 @@ async function run() {
       const { id } = req.params;
       const updatedData = req.body;
 
-      console.log(updatedData);
+      
 
       const result = await destinationCollection.updateOne(
         { _id: new ObjectId(id) },
@@ -111,10 +113,10 @@ async function run() {
     });
 
     // Booking Post Api
-    app.post("/booking", async (req, res) => {
+    app.post("/booking", verifyToken, async (req, res) => {
       const bookingData = req.body;
       const result = await bookingCollection.insertOne(bookingData);
-      console.log(bookingData);
+     
       res.json(result);
     });
 
@@ -128,7 +130,7 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
